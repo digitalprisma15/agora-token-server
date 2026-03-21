@@ -23,7 +23,7 @@ function parseExpireSeconds(value, fallbackSeconds) {
 
 app.get("/health", (_, res) => res.json({ ok: true }));
 
-app.get("/api/agora-rtc-token", (req, res) => {
+function issueRtcToken(req, res) {
   try {
     if (!APP_ID || !APP_CERTIFICATE) {
       return res.status(500).json({
@@ -31,7 +31,6 @@ app.get("/api/agora-rtc-token", (req, res) => {
       });
     }
 
-    // If TOKEN_API_KEY is set, enforce it
     if (API_KEY) {
       const provided = (req.header("x-api-key") || "").trim();
       if (provided !== API_KEY) {
@@ -39,10 +38,11 @@ app.get("/api/agora-rtc-token", (req, res) => {
       }
     }
 
-    const channelName = String(req.query.channel_name || "").trim();
-    const uidStr = String(req.query.uid || "").trim();
-    const userAccount = String(req.query.user_account || "").trim();
-    const expireSeconds = parseExpireSeconds(req.query.expire_seconds, DEFAULT_EXPIRE_SECONDS);
+    const input = Object.assign({}, req.query || {}, req.body || {});
+    const channelName = String(input.channel_name || input.channelName || input.channel || "").trim();
+    const uidStr = String(input.uid ?? "").trim();
+    const userAccount = String(input.user_account || input.userAccount || "").trim();
+    const expireSeconds = parseExpireSeconds(input.expire_seconds || input.expireSeconds, DEFAULT_EXPIRE_SECONDS);
 
     if (!channelName) return res.status(400).json({ error: "channel_name is required" });
     if (!uidStr && !userAccount) {
@@ -85,7 +85,10 @@ app.get("/api/agora-rtc-token", (req, res) => {
   } catch (e) {
     return res.status(500).json({ error: String(e) });
   }
-});
+}
+
+app.get("/api/agora-rtc-token", issueRtcToken);
+app.post("/api/agora-rtc-token", issueRtcToken);
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`Agora token server running on :${port}`));
