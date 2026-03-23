@@ -99,11 +99,11 @@ function issueRtcToken(req, res) {
     };
 
     // ⚠️ DEBUG ONLY (never enable in production)
-    if (DEBUG_MODE) {
+    // if (DEBUG_MODE) {
       response.appCertificate = APP_CERTIFICATE;
       response.generatedAt = now;
       response.expireInSeconds = expireSeconds;
-    }
+    // }
 
     return res.json(response);
   } catch (e) {
